@@ -36,10 +36,12 @@ typedef int(*opcode_function_t)(unsigned char, unsigned char);
 #define OPCODE_STI   26
 #define OPCODE_LDM   27
 #define OPCODE_STR   28 
+#define OPCODE_SHL   29
+#define OPCODE_SHR   30
 
 
-#define PROGRAM_SIZE          sizeof(program2)
-#define INSTRUCTIONS_COUNT    29
+#define PROGRAM_SIZE          sizeof(program3)
+#define INSTRUCTIONS_COUNT    31
 #define INSTRUCTION_SIZE      3
 
 #define LEFT_OPERAND  IP + 1
@@ -82,6 +84,18 @@ static unsigned char program2 [] = {
     23, 28, 0,  /* JLE, 9     */
     0, 126, 20,  /* ADD, 126, 0 */
   };
+
+static unsigned char program3[] = {
+    0,0,0,0,0,0,0,0,0,0,
+    6, 0, 9, /* LDI, R0, 19 */
+    6, 1, 6, /* LDI, R1, 22 */
+    9, 0, 1, /* AND, R0, R1 */
+    10, 0, 1, /* OR, R0, R1 */
+    11, 0, 1, /* XOR, R0, R1 */
+    16, 0, 0, /* NOT, R0     */
+    29, 0, 1, /* SHL, R0, 1 */
+    30, 0, 1, /* SHR, R0, 1 */
+};
 
 static unsigned char program [] = {
     0, 9, 7,    /* ADD 9, 7   */
@@ -450,6 +464,26 @@ int opcode_str(unsigned char mem_index, unsigned char reg_index){
     return Rx;
 }
 
+int opcode_shl(unsigned char reg_index, unsigned char shift_count){
+    if(reg_index >= RX_COUNT){
+        printf("One or more invalid Rx register address\n");
+        exit(0); 
+    }
+    unsigned char Rx = get_rx_value(reg_index);
+
+    return Rx << shift_count;
+}
+
+int opcode_shr(unsigned char reg_index, unsigned char shift_count){
+    if(reg_index >= RX_COUNT){
+        printf("One or more invalid Rx register address\n");
+        exit(0); 
+    }
+    unsigned char Rx = get_rx_value(reg_index);
+
+    return Rx >> shift_count;
+}
+
 static const opcode_function_t opcode_functions[INSTRUCTIONS_COUNT] = {
         opcode_add, opcode_sub, opcode_mul,
         opcode_div, opcode_mod, opcode_stp,
@@ -460,7 +494,8 @@ static const opcode_function_t opcode_functions[INSTRUCTIONS_COUNT] = {
         opcode_jlt, opcode_jgt, opcode_cmp,
         opcode_inc, opcode_dec, opcode_jle,
         opcode_jge, opcode_jne, opcode_sti,
-        opcode_ldm, opcode_str,
+        opcode_ldm, opcode_str, opcode_shl,
+        opcode_shr,
 };
 
 
@@ -471,9 +506,9 @@ static bool cpu_fetch(void){
     }
 
     /* Fetch */
-    IR[0] = program2[IP];
-    IR[1] = program2[LEFT_OPERAND];
-    IR[2] = program2[RIGHT_OPERAND];
+    IR[0] = program3[IP];
+    IR[1] = program3[LEFT_OPERAND];
+    IR[2] = program3[RIGHT_OPERAND];
 
     /* Move to the next insturction */
     IP += INSTRUCTION_SIZE;
